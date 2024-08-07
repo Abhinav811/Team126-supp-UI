@@ -7,8 +7,8 @@ import os
 # Load the pre-processed data
 @st.cache_data
 def load_data():
-    data_path = "/Users/abhinavarun/Downloads/2024_SMT_Data_Challenge"  # Update this path
-    pitches_pickoffs_merged_df = pd.read_csv(os.path.join(data_path, "pitches_pickoffs_merged_df.csv"))
+    data_path = "pitches_pickoffs_merged_df.csv"
+    pitches_pickoffs_merged_df = pd.read_csv(data_path)
     return pitches_pickoffs_merged_df
 
 data = load_data()
