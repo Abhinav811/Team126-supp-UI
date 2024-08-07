@@ -1,10 +1,6 @@
 streamlit
 pandas
-numpy
 matplotlib
-matplotlib.pyplot
 seaborn
-os
-stats
-scipy
 statsmodels
+scipy
