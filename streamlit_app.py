@@ -13,8 +13,27 @@ def load_data():
 
 data = load_data()
 
+# Custom function to calculate means by split
+def means_by_split(merged_df):
+    means = pd.DataFrame()
+    before_left_col = merged_df.loc[(merged_df['pitcher_hand'] == 'Left') & (merged_df['pitch_label'] == 'before'), 'lead_distance']
+    pickoff_left_col = merged_df.loc[(merged_df['pitcher_hand'] == 'Left') & (merged_df['pitch_label'] == 'pickoff'), 'lead_distance']
+    after_left_col = merged_df.loc[(merged_df['pitcher_hand'] == 'Left') & (merged_df['pitch_label'] == 'after'), 'lead_distance']
+    before_right_col = merged_df.loc[(merged_df['pitcher_hand'] == 'Right') & (merged_df['pitch_label'] == 'before'), 'lead_distance']
+    pickoff_right_col = merged_df.loc[(merged_df['pitcher_hand'] == 'Right') & (merged_df['pitch_label'] == 'pickoff'), 'lead_distance']
+    after_right_col = merged_df.loc[(merged_df['pitcher_hand'] == 'Right') & (merged_df['pitch_label'] == 'after'), 'lead_distance']
+    
+    # Assign to means dataframe
+    means.loc['Before', 'Left'] = before_left_col.mean()
+    means.loc['Pickoff', 'Left'] = pickoff_left_col.mean()
+    means.loc['After', 'Left'] = after_left_col.mean()
+    means.loc['Before', 'Right'] = before_right_col.mean()
+    means.loc['Pickoff', 'Right'] = pickoff_right_col.mean()
+    means.loc['After', 'Right'] = after_right_col.mean()
+    return means
+
 # Streamlit app layout
-st.title("Holding 'Em Close: \nAn Interactive Bar Chart By Team 126")
+st.title("Holding 'Em Close: \nAn Interactive Bar Chart Analyzing Pickoff Attempts")
 
 # Sidebar filters
 leagues = data['HomeTeam'].unique().tolist()
@@ -22,9 +41,6 @@ leagues.insert(0, 'All Leagues')  # Add 'All Leagues' at the top
 
 selected_league = st.sidebar.selectbox('Select League', leagues)
 selected_hands = st.sidebar.multiselect('Select Pitcher Handedness', ['Left', 'Right'], default=['Left', 'Right'])
-
-# Option to see all pitches vs. just pickoff throws
-all_pitches_option = st.sidebar.radio('Select Data', ['All Pitches', 'Pickoff Throws'])
 
 # Filter data based on selections
 if selected_league == 'All Leagues':
@@ -35,40 +51,24 @@ else:
 if selected_hands:
     filtered_data = filtered_data[filtered_data['pitcher_hand'].isin(selected_hands)]
 
-if all_pitches_option == 'All Pitches':
-    filtered_data = filtered_data[filtered_data['event_code'] == 1]  # Assuming event_code 1 is for all pitches
-else:
-    filtered_data = filtered_data[filtered_data['event_code'] == 6]  # Assuming event_code 6 is for pickoff throws
-
 # Check for sufficient data
 if filtered_data.empty:
     st.write("No data available for the selected filters. Please adjust your selections.")
 else:
-    # Calculate averages
-    if selected_league == 'All Leagues':
-        if 'All' in selected_hands:
-            # Average lead distances for all leagues and both handedness
-            average_lead_distances = filtered_data.groupby(['HomeTeam', 'pitch_label'])['lead_distance'].mean().reset_index()
-        else:
-            # Average lead distances for all leagues with selected handedness
-            average_lead_distances = filtered_data.groupby(['HomeTeam', 'pitch_label'])['lead_distance'].mean().reset_index()
-    else:
-        if 'All' in selected_hands:
-            # Average lead distances for selected league and both handedness
-            average_lead_distances = filtered_data.groupby('pitch_label')['lead_distance'].mean().reset_index()
-        else:
-            # Average lead distances for selected league with selected handedness
-            average_lead_distances = filtered_data.groupby(['pitch_label'])['lead_distance'].mean().reset_index()
+    # Calculate averages using means_by_split
+    average_lead_distances = means_by_split(filtered_data).reset_index().melt(id_vars='index')
+    average_lead_distances.columns = ['pitch_label', 'pitcher_hand', 'lead_distance']
+    average_lead_distances['HomeTeam'] = selected_league if selected_league != 'All Leagues' else 'All Leagues'
 
     # Ensure the order of the pitch labels
-    average_lead_distances['pitch_label'] = pd.Categorical(average_lead_distances['pitch_label'], categories=['before', 'pickoff', 'after'], ordered=True)
+    average_lead_distances['pitch_label'] = pd.Categorical(average_lead_distances['pitch_label'], categories=['Before', 'Pickoff', 'After'], ordered=True)
     average_lead_distances = average_lead_distances.sort_values('pitch_label')
 
     # Plotting
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Use barplot from seaborn
-    sns.barplot(x='pitch_label', y='lead_distance', hue='HomeTeam' if selected_league == 'All Leagues' else None, data=average_lead_distances, ax=ax)
+    sns.barplot(x='pitch_label', y='lead_distance', hue='pitcher_hand', data=average_lead_distances, ax=ax)
 
     # Add data labels on top of bars
     for container in ax.containers:
@@ -104,10 +104,10 @@ else:
         from statsmodels.stats.multicomp import pairwise_tukeyhsd
         
         # Ensure there is data for each pitch label
-        if 'before' in filtered_data['pitch_label'].values and 'pickoff' in filtered_data['pitch_label'].values and 'after' in filtered_data['pitch_label'].values:
-            before_list = filtered_data[filtered_data['pitch_label'] == 'before']['lead_distance']
-            pickoff_list = filtered_data[filtered_data['pitch_label'] == 'pickoff']['lead_distance']
-            after_list = filtered_data[filtered_data['pitch_label'] == 'after']['lead_distance']
+        if 'Before' in filtered_data['pitch_label'].values and 'Pickoff' in filtered_data['pitch_label'].values and 'After' in filtered_data['pitch_label'].values:
+            before_list = filtered_data[filtered_data['pitch_label'] == 'Before']['lead_distance']
+            pickoff_list = filtered_data[filtered_data['pitch_label'] == 'Pickoff']['lead_distance']
+            after_list = filtered_data[filtered_data['pitch_label'] == 'After']['lead_distance']
             
             try:
                 f_stat, pvalue = f_oneway(before_list, pickoff_list, after_list)
