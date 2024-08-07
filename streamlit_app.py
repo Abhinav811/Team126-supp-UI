@@ -68,7 +68,7 @@ else:
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Use barplot from seaborn
-    sns.barplot(x='pitch_label', y='lead_distance', hue='pitcher_hand', data=average_lead_distances, ax=ax)
+    sns.barplot(x='pitch_label', y='lead_distance', hue='pitcher_hand', data=average_lead_distances, ax=ax, palette={'Left': 'blue', 'Right': 'red'})
 
     # Add data labels on top of bars
     for container in ax.containers:
