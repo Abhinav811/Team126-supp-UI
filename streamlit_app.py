@@ -10,6 +10,8 @@ def load_data():
     merged_df = pd.read_csv(data_path)
     return merged_df
 
+
+
 data = load_data()
 
 # Custom function to calculate means by split
@@ -81,40 +83,3 @@ else:
     plt.tight_layout()
 
     st.pyplot(fig)
-
-    # Additional information
-    if st.sidebar.button('Show Z-Test Results'):
-        from statsmodels.stats.weightstats import ztest
-        left_lead = filtered_data[filtered_data['pitcher_hand'] == 'Left']['lead_distance']
-        right_lead = filtered_data[filtered_data['pitcher_hand'] == 'Right']['lead_distance']
-        
-        # Check if both groups have data
-        if len(left_lead) > 0 and len(right_lead) > 0:
-            try:
-                z_stat, pvalue = ztest(left_lead, right_lead)
-                st.write(f"Z-Test P-Value: {pvalue:.4f}")
-            except ZeroDivisionError:
-                st.write("Error: Insufficient data for Z-Test. Please adjust your selections to include data for both pitcher hands.")
-        else:
-            st.write("Error: Not enough data for Z-Test. Ensure both pitcher hands have data or broaden your selection criteria.")
-
-    if st.sidebar.button('Show ANOVA and Tukey HSD Results'):
-        from scipy.stats import f_oneway
-        from statsmodels.stats.multicomp import pairwise_tukeyhsd
-        
-        # Ensure there is data for each pitch label
-        if 'Before' in filtered_data['pitch_label'].values and 'Pickoff' in filtered_data['pitch_label'].values and 'After' in filtered_data['pitch_label'].values:
-            before_list = filtered_data[filtered_data['pitch_label'] == 'Before']['lead_distance']
-            pickoff_list = filtered_data[filtered_data['pitch_label'] == 'Pickoff']['lead_distance']
-            after_list = filtered_data[filtered_data['pitch_label'] == 'After']['lead_distance']
-            
-            try:
-                f_stat, pvalue = f_oneway(before_list, pickoff_list, after_list)
-                st.write(f"ANOVA P-Value: {pvalue:.4f}")
-                
-                tukey = pairwise_tukeyhsd(endog=filtered_data['lead_distance'], groups=filtered_data['pitch_label'], alpha=0.05)
-                st.write(tukey)
-            except ZeroDivisionError:
-                st.write("Error: Insufficient data for ANOVA test. Please adjust your selections to include sufficient data for each pitch label.")
-        else:
-            st.write("Error: Not enough data for ANOVA test. Ensure that each pitch label has data or broaden your selection criteria.")
