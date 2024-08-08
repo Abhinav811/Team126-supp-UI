@@ -1,4 +1,3 @@
-import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -10,9 +9,14 @@ def load_data():
     merged_df = pd.read_csv(data_path)
     return merged_df
 
-
+@st.cache_data
+def load_additional_data():
+    data_path = "pitches_pickoffs_merged_df.csv"  # Update this path
+    pitches_pickoffs_data = pd.read_csv(data_path)
+    return pitches_pickoffs_data
 
 data = load_data()
+additional_data = load_additional_data()
 
 # Custom function to calculate means by split
 def means_by_split(merged_df):
