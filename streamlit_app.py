@@ -10,7 +10,7 @@ from statsmodels.stats.multicomp import pairwise_tukeyhsd
 # Load the pre-processed data
 @st.cache_data
 def load_data():
-    data_path = "merged_df"  # Update this path
+    data_path = "merged_df.csv"  # Update this path
     pitches_pickoffs_merged_df = pd.read_csv(data_path)
     return pitches_pickoffs_merged_df
 
