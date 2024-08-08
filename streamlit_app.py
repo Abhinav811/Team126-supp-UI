@@ -2,14 +2,13 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
 
 # Load the pre-processed data
 @st.cache_data
 def load_data():
-    data_path = "pitches_pickoffs_merged_df.csv"
-    pitches_pickoffs_merged_df = pd.read_csv(data_path)
-    return pitches_pickoffs_merged_df
+    data_path = "merged_df.csv"
+    merged_df = pd.read_csv(data_path)
+    return merged_df
 
 data = load_data()
 
@@ -68,7 +67,7 @@ else:
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Use barplot from seaborn
-    sns.barplot(x='pitch_label', y='lead_distance', hue='pitcher_hand', data=average_lead_distances, ax=ax, palette={'Left': 'blue', 'Right': 'red'})
+    sns.barplot(x='pitch_label', y='lead_distance', hue='pitcher_hand', data=average_lead_distances, ax=ax, palette=['red', 'blue'])
 
     # Add data labels on top of bars
     for container in ax.containers:
