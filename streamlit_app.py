@@ -1,18 +1,21 @@
+import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
+from scipy.stats import f_oneway
+from statsmodels.stats.weightstats import ztest
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
 
 # Load the pre-processed data
 @st.cache_data
 def load_data():
-    data_path = "merged_df.csv"
-    merged_df = pd.read_csv(data_path)
-    return merged_df
+    data_path = "merged_df"  # Update this path
+    return pitches_pickoffs_merged_df
 
 @st.cache_data
 def load_additional_data():
     data_path = "pitches_pickoffs_merged_df.csv"  # Update this path
-    pitches_pickoffs_data = pd.read_csv(data_path)
     return pitches_pickoffs_data
 
 data = load_data()
@@ -36,7 +39,6 @@ def means_by_split(merged_df):
     means.loc['Pickoff', 'Right'] = pickoff_right_col.mean()
     means.loc['After', 'Right'] = after_right_col.mean()
     return means
-
 
 # Statistical Tests Functions
 def ztest_by_hand(pitches_pickoffs_merged_df):
@@ -68,7 +70,6 @@ def anova_and_posthoc_levels(pitches_pickoffs_merged_df):
     f_stat, pvalue = f_oneway(a_column, aa_column, aaa_column, aaaa_column)
     tukey = pairwise_tukeyhsd(endog=pitches_pickoffs_merged_df['lead_distance'], groups=pitches_pickoffs_merged_df['HomeTeam'], alpha=.05)
     return f_stat, pvalue, tukey
-
 
 # Streamlit app layout
 st.title("Holding 'Em Close: \nAn Interactive Bar Chart Analyzing Pickoff Attempts")
@@ -105,7 +106,7 @@ else:
     # Plotting
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Use barplot from seaborn
+    # Use barplot from seaborn with custom colors
     sns.barplot(x='pitch_label', y='lead_distance', hue='pitcher_hand', data=average_lead_distances, ax=ax, palette=['red', 'blue'])
 
     # Add data labels on top of bars
@@ -121,40 +122,7 @@ else:
 
     st.pyplot(fig)
 
-
     # Additional information
-    if st.sidebar.button('Show Z-Test Results'):
-        left_lead = additional_data[additional_data['pitcher_hand'] == 'Left']['lead_distance']
-        right_lead = additional_data[additional_data['pitcher_hand'] == 'Right']['lead_distance']
-        
-        # Check if both groups have data
-        if len(left_lead) > 0 and len(right_lead) > 0:
-            try:
-                z_stat, pvalue = ztest(left_lead, right_lead)
-                st.write(f"Z-Test P-Value: {pvalue:.4f}")
-            except ZeroDivisionError:
-                st.write("Error: Insufficient data for Z-Test. Please adjust your selections to include data for both pitcher hands.")
-        else:
-            st.write("Error: Not enough data for Z-Test. Ensure both pitcher hands have data or broaden your selection criteria.")
-
-    if st.sidebar.button('Show ANOVA and Tukey HSD Results'):
-        # Ensure there is data for each pitch label
-        before_list = additional_data[additional_data['pitch_label'] == 'Before']['lead_distance']
-        pickoff_list = additional_data[additional_data['pitch_label'] == 'Pickoff']['lead_distance']
-        after_list = additional_data[additional_data['pitch_label'] == 'After']['lead_distance']
-        
-        try:
-            f_stat, pvalue = f_oneway(before_list, pickoff_list, after_list)
-            st.write(f"ANOVA P-Value: {pvalue:.4f}")
-            
-            tukey = pairwise_tukeyhsd(endog=additional_data['lead_distance'], groups=additional_data['pitch_label'], alpha=0.05)
-            st.write(tukey)
-        except ZeroDivisionError:
-            st.write("Error: Insufficient data for ANOVA test. Please adjust your selections to include sufficient data for each pitch label.")
-        except ValueError as e:
-            st.write(f"Error: {e}. Ensure that each pitch label has data or broaden your selection criteria.")
-
-# Additional information
     if st.sidebar.button('Show Z-Test Results'):
         z_stat, pvalue = ztest_by_hand(additional_data)
         st.write(f"Z-Test P-Value: {pvalue:.4f}")
