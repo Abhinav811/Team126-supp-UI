@@ -17,7 +17,7 @@ def load_data():
 @st.cache_data
 def load_additional_data():
     data_path = "pitches_pickoffs_merged_df.csv"  # Update this path
-    pitches_pickoffs_data = pd.read_csv(data_[path)
+    pitches_pickoffs_data = pd.read_csv(data_path)
     return pitches_pickoffs_data
 
 data = load_data()
